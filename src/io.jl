@@ -78,7 +78,7 @@ module io
     end
 
     module input
-        using moeum
+        include("structs.jl")
 
         function from_dict(source ; name::String = "moeum.MOEUM")
             convertable, result = true, nothing
@@ -94,7 +94,7 @@ module io
                     dat_sori = [key for key in keys(source[1])]
                     hol_sori = [[row[dat] for dat in dat_sori] for row in source]
 
-                    result = moeum.MOEUM(dat_sori = dat_sori, hol_sori = hol_sori, name = name)
+                    result = structs.MOEUM(dat_sori = dat_sori, hol_sori = hol_sori, name = name)
                 else
                     result = convertable
                 end
@@ -113,7 +113,7 @@ module io
                     dat_sori = [key for key in keys(source)]
                     hol_sori = [[source[dat][i] for dat in dat_sori] for i in eachindex(source[dat_sori[1]])]
 
-                    result = moeum.MOEUM(dat_sori = dat_sori, hol_sori = hol_sori, name = name)
+                    result = structs.MOEUM(dat_sori = dat_sori, hol_sori = hol_sori, name = name)
                 else
                     result = convertable
                 end
