@@ -42,4 +42,20 @@ module input
 
         return result
     end
+
+    function from_dataframe(source; name = "moeum.MOEUM")
+        dat_sori, hol_sori = [String(item) for item in source.colindex.names], []
+
+        datas = source.columns
+        for i in eachindex(datas[1])
+            item = []
+            for col in datas
+                append!(item, col[i])
+            end
+
+            append!(hol_sori, [item])
+        end
+
+        return structs.MOEUM(dat_sori = dat_sori, hol_sori = hol_sori, name = name)
+    end
 end

@@ -10,4 +10,6 @@ module moeum
     #exporting to root
     MOEUM = structs.MOEUM
     from_dict = input.from_dict
+    from_dataframe = input.from_dataframe
+
 end

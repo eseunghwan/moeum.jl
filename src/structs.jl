@@ -51,11 +51,11 @@ module structs
                 return internal.select(instance, key)
             end
 
+            #output functions
             instance.to_string = function()
-                return internal.to_string(instance)
+                return output.to_string(instance)
             end
 
-            #output functions
             instance.to_dataframe = function()
                 return output.to_dataframe(instance)
             end
