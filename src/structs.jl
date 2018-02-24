@@ -1,6 +1,7 @@
 module structs
 
-    include("io.jl")
+    include("io.internal.jl")
+    include("io.output.jl")
 
     mutable struct MOEUM
         """
@@ -47,24 +48,24 @@ module structs
 
             #internal functions
             instance.select = function(key)
-                return io.internal.select(instance, key)
+                return internal.select(instance, key)
             end
 
             instance.to_string = function()
-                return io.internal.to_string(instance)
+                return internal.to_string(instance)
             end
 
             #output functions
             instance.to_dataframe = function()
-                return io.output.to_dataframe(instance)
+                return output.to_dataframe(instance)
             end
 
             instance.to_dict = function(;orientation::String = "Dict")
-                return io.output.to_dict(instance, orientation)
+                return output.to_dict(instance, orientation)
             end
 
             instance.to_csv = function(;csv_path::String = joinpath(pwd(), string(instance.name, ".csv")))
-                return io.output.to_csv(instance, csv_path)
+                return output.to_csv(instance, csv_path)
             end
 
             return instance

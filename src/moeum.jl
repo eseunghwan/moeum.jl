@@ -4,10 +4,10 @@ module moeum
     export MOEUM, io
 
     #includes
-    include("io.jl")
+    include("io.input.jl")
     include("structs.jl")
 
     #exporting to root
     MOEUM = structs.MOEUM
-    from_dict = io.input.from_dict
+    from_dict = input.from_dict
 end
