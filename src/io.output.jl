@@ -2,7 +2,7 @@ module output
     #using DataFrames
 
     function to_string(instance)
-        sok_dict, sok_arr = Dict(key=>value.data for (key, value) in instance._sok_dict), [item.data for item in instance._sok_arr]
+        sok_dict, sok_arr = Dict(key=> value.data for (key, value) in instance._sok_dict), [item.data for item in instance._sok_arr]
         max_lengths = Dict(key => ceil(Int, maximum(insert!([length(string(item)) for item in sok_dict[key]], 1, length(key))) * 1.5) for key in keys(sok_dict))
         max_lengths["index"] = maximum([length(string(length(sok_arr))), length("index")])
 
@@ -28,15 +28,17 @@ module output
     end
 
     function to_dataframe(instance)
-        return DataFrames.DataFrame(instance._sok_dict)
+        return DataFrames.DataFrame(Dict(key=> value.data for (key, value) in instance._sok_dict))
     end
 
     function to_dict(instance, orientation)
         result = nothing
+        sok_dict, sok_arr = Dict(key=> value.data for (key, value) in instance._sok_dict), [item.data for item in instance._sok_arr]
+
         if orientation == "Dict"
-            result = instance._sok_dict
+            result = sok_dict
         elseif orientation == "Array"
-            result = instance._sok_arr
+            result = sok_arr
         end
 
         return result
@@ -44,10 +46,12 @@ module output
 
     function to_csv(instance, csv_path)
         result = nothing
+        sok_dict, sok_arr = Dict(key=> value.data for (key, value) in instance._sok_dict), [item.data for item in instance._sok_arr]
+
         try
-            open(csv_path) do f_csv
-                csv_string = string(join(keys(instance.sok_dict), ", "), "\n")
-                for sok in instance.sok_arr
+            open(csv_path, "w") do f_csv
+                csv_string = string(join(keys(sok_dict), ", "), "\n")
+                for sok in sok_arr
                     csv_string = string(csv_string, join(values(sok), ", "), "\n")
                 end
                 write(f_csv, csv_string[1:end - 1])

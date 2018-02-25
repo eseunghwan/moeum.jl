@@ -11,5 +11,6 @@ module moeum
     MOEUM = structs.MOEUM
     from_dict = input.from_dict
     from_dataframe = input.from_dataframe
+    from_csv = input.from_csv
 
 end
