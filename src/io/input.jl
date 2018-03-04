@@ -1,5 +1,5 @@
 module input
-    include("structs.jl")
+    include("../structs/Core.jl")
 
     function from_dataframe(source; name = "moeum.MOEUM")
         dat_sori, hol_sori = [String(item) for item in source.colindex.names], []
@@ -14,7 +14,7 @@ module input
             append!(hol_sori, [item])
         end
 
-        return structs.MOEUM(dat_sori = dat_sori, hol_sori = hol_sori, name = name)
+        return Core.MOEUM(dat_sori = dat_sori, hol_sori = hol_sori, name = name)
     end
 
     function from_dict(source ; name::String = "moeum.MOEUM")
@@ -31,7 +31,7 @@ module input
                 dat_sori = [key for key in keys(source[1])]
                 hol_sori = [[row[dat] for dat in dat_sori] for row in source]
 
-                result = structs.MOEUM(dat_sori = dat_sori, hol_sori = hol_sori, name = name)
+                result = Core.MOEUM(dat_sori = dat_sori, hol_sori = hol_sori, name = name)
             else
                 result = convertable
             end
@@ -50,7 +50,7 @@ module input
                 dat_sori = [key for key in keys(source)]
                 hol_sori = [[source[dat][i] for dat in dat_sori] for i in eachindex(source[dat_sori[1]])]
 
-                result = structs.MOEUM(dat_sori = dat_sori, hol_sori = hol_sori, name = name)
+                result = Core.MOEUM(dat_sori = dat_sori, hol_sori = hol_sori, name = name)
             else
                 result = convertable
             end
@@ -64,9 +64,9 @@ module input
         name = name == "" ? splitext(basename(source_file))[1] : name
         open(source_file, "r") do f_csv
             lines = readlines(f_csv)
-            dat_sori, hol_sori = collect(strip(item) for item in split(lines[1], ",")), collect(collect(strip(item) for item in split(line, ",")) for line in lines[2:end])
+            dat_sori, hol_sori = [strip(item) for item in split(lines[1], ",")], [[strip(item) for item in split(line, ",")] for line in lines[2:end]]
 
-            result = structs.MOEUM(dat_sori = dat_sori, hol_sori = hol_sori, name = name)
+            result = Core.MOEUM(dat_sori = dat_sori, hol_sori = hol_sori, name = name)
         end
 
         return result

@@ -1,102 +1,5 @@
-module structs
+module DataSet
     using DataStructures
-
-    include("io/internal.jl")
-    include("io/output.jl")
-
-    mutable struct MOEUM
-        """
-        An Tabular Struct for Massive Data Processing
-
-        **Common methods**
-        """
-
-        ###parameters
-        #arguments
-        dat_sori::Array
-        hol_sori::Array
-        name::String
-        #hidden parameters
-        _sok_dict::DataStructures.OrderedDict
-        _sok_arr::Array
-        
-        ###functions
-        #internal functions
-        select::Function
-        describe::Function
-
-        #modify
-        insert::Function
-        append::Function
-        #equation::Function
-
-        #query
-        #where::Function
-
-        #output
-        to_string::Function
-        to_dataframe::Function
-        to_dict::Function
-        to_csv::Function
-        to_db::Function
-
-        #init
-        function MOEUM(;dat_sori = [], hol_sori = [], name = "moeum.MOEUM")
-            #init instance
-            instance = new(dat_sori, hol_sori, name)
-
-            #=key_list = instance.dat_sori; sok_dict = Dict(dat => [] for dat in instance.dat_sori)
-            for hol in instance.hol_sori
-                for i in eachindex(instance.dat_sori)
-                    append!(sok_dict[instance.dat_sori[i]], hol[i])
-                end
-            end=#
-            instance._sok_dict, instance._sok_arr = internal.set_sok(instance.dat_sori, instance.hol_sori, instance.name)
-
-            #instance._sok_dict = DataStructures.OrderedDict(key_list[i]=> ColumnSet(sok_dict[key_list[i]], i, key_list[i], instance.name) for i in eachindex(key_list))
-            #instance._sok_arr = [RowSet(DataStructures.OrderedDict(instance.dat_sori[j] => instance.hol_sori[i][j] for j in eachindex(instance.dat_sori)), i, instance.name) for i in eachindex(instance.hol_sori)]
-
-            #modify
-            instance.insert = function(;dat_pos::Int = length(instance.dat_sori) + 1, dat_name::Any = "", hol_value::Array = [])
-                return internal.insert(instance, dat_pos, dat_name, hol_value)
-            end
-
-            instance.append = function(;dat_name::Any = "", hol_value::Array = [])
-                return internal.append(instance, dat_name, hol_value)
-            end
-
-            #internal functions
-            instance.select = function(key)
-                return internal.select(instance, key)
-            end
-
-            instance.describe = function()
-                return internal.describe(instance)
-            end
-
-            #output functions
-            instance.to_string = function()
-                return output.to_string(instance)
-            end
-
-            instance.to_dataframe = function()
-                return output.to_dataframe(instance)
-            end
-
-            instance.to_dict = function(;orientation::String = "Dict")
-                return output.to_dict(instance, orientation)
-            end
-
-            instance.to_csv = function(;csv_path::String = joinpath(pwd(), string(instance.name, ".csv")))
-                return output.to_csv(instance, csv_path)
-            end
-
-            return instance
-        end
-    end
-    function Base.show(io::Base.IO, instance::MOEUM)
-        println(io, instance.to_string())
-    end
 
     mutable struct ColumnSet
         ###parameters
@@ -124,12 +27,9 @@ module structs
         #descriptive statistics/invalid
         _invalid::Function
 
-        #eval equation
-        equation::Function
-
         #init
-        function ColumnSet(data = [], col_num = 0, col_name = "dat", parent_name = "moeum.MOEUM")
-            instance = new(data) ; instance._parent_name, instance._col_num, instance._col_name = col_name = parent_name, col_num, col_name
+        function ColumnSet(data = [], col_num = 0, col_name = "dat", parent = nothing)
+            instance = new(data) ; instance._parent_name, instance._col_num, instance._col_name = col_name = parent.name, col_num, col_name
             type_count = Dict("Numeric"=>0, "String"=>0)
             for i in eachindex(instance.data)
                 item = string(instance.data[i])
@@ -154,10 +54,9 @@ module structs
             end
 
             #set default invalid to functions
-            instance.equation, instance.sum, instance.avg, instance.std, instance.min, instance.max, instance.unique, instance.describe = [instance._invalid for i in 1:8]
+            instance.sum, instance.avg, instance.std, instance.min, instance.max, instance.unique, instance.describe = [instance._invalid for i in 1:7]
             if type_count["Numeric"] >= type_count["String"]
                 instance._data_type = "Numeric"
-                #instance.data = collect(float(item) for item in instance.data)
 
                 #descriptive statistics/numeric
                 parsed_data = [parse(Float64, string(item)) for item in instance.data]
@@ -179,13 +78,6 @@ module structs
 
                 instance.min = function()
                     Base.minimum(instance.data)
-                end
-
-                #eval equation
-                instance.equation = function(equation_string)
-                    for item in instance.data
-                        eval(parse(equation_string))
-                    end
                 end
             else
                 instance._data_type = "String"
@@ -252,9 +144,13 @@ module structs
         null::Function
         keys::Function
 
+        #eval
+        where::Function
+        equation::Function
+
         #init
-        function RowSet(data = DataStructures.OrderedDict(), row_num = 0, parent_name = "moeum.MOEUM")
-            instance = new(data) ; instance._parent_name, instance._row_num = parent_name, row_num
+        function RowSet(data = DataStructures.OrderedDict(), row_num = 0, parent = nothing)
+            instance = new(data) ; instance._parent_name, instance._row_num = parent.name, row_num
             instance.null = function()
                 result = []
                 for (key, value) in instance.data
@@ -268,6 +164,37 @@ module structs
 
             instance.keys = function()
                 result = Base.keys(instance.data)
+                return result
+            end
+
+            #eval
+            instance.where = function(where_string; drop_null::Bool = true)
+                result = nothing
+                key_list = instance.keys()
+                eval(parse(string(join(key_list, ", "), " = $(values(instance.data))")))
+                if eval(parse(where_string))
+                    result = collect(values(instance.data))
+                else
+                    if !drop_null
+                        result = [nothing for key in key_list]
+                    end
+                end
+
+                return result
+            end
+
+            instance.equation = function(equation_string)
+                result = nothing
+                key_list = in(strip(split(equation_string, "=")[1]), instance.keys()) ? instance.keys() : append!(nstance.keys(), strip(split(equation_string, "=")[1]))
+                eval(parse(string(join(instance.keys(), ", "), " = $(values(instance.data))")))
+                
+                #try
+                eval(parse(equation_string))
+                result = [eval(parse(key)) for key in key_list]
+                #catch
+                #    result = [nothing for key in key_list]
+                #end
+
                 return result
             end
 
